@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#FBFAF5"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co; base-uri 'self'; form-action 'self'"><meta name="referrer" content="no-referrer"><title>Tu espacio · EasyEats</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="portal.css"></head>
+<body>
+<div id="login-screen" class="login-screen">
+<header class="topbar"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="method">THE EASY WAY <i></i> TU ESPACIO</span></header>
+<main class="login-wrap">
+<form id="login-form" class="login-card" novalidate>
+<span class="eyebrow">ACCESO PRIVADO</span>
+<h1>Tu espacio<span class="name-dot">.</span></h1>
+<p>Entra con el correo y la contraseña que te compartió tu nutriólogo.</p>
+<label class="field"><span>CORREO</span><input id="email" type="email" autocomplete="username" required></label>
+<label class="field"><span>CONTRASEÑA</span><input id="password" type="password" autocomplete="current-password" required></label>
+<button class="primary" type="submit">Entrar ↗</button>
+<p id="portal-message" class="portal-message" role="status"></p>
+<button id="login-logout" class="link-btn" type="button" hidden>Cerrar sesión</button>
+<p class="login-foot">¿Olvidaste tu contraseña? Escríbele a tu nutriólogo para restablecerla.</p>
+</form>
+</main>
+</div>
+<dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
+<button class="close" type="button" aria-label="Cerrar">×</button>
+<span class="eyebrow">TU CUENTA</span>
+<h2 id="account-title">Cambiar contraseña</h2>
+<form id="password-form" novalidate>
+<label class="field"><span>NUEVA CONTRASEÑA</span><input id="new-password" type="password" autocomplete="new-password" minlength="8" required></label>
+<label class="field"><span>CONFIRMAR</span><input id="confirm-password" type="password" autocomplete="new-password" minlength="8" required></label>
+<button class="primary" type="submit">Guardar contraseña</button>
+<p id="password-message" class="portal-message" role="status"></p>
+</form>
+<hr>
+<button id="logout" class="secondary" type="button">Cerrar sesión</button>
+</dialog>
+<script src="config.js"></script><script src="portal.js"></script>
+</body>
+</html>
