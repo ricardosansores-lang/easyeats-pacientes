@@ -6,6 +6,7 @@
   const BUCKET = C.bucket || 'espacios';
   const $ = s => document.querySelector(s);
   let actual = null;
+  const PAQUETES = {'cada-7': 'Paquete cada 7 días', 'cada-15': 'Paquete cada 15 días', 'cada-21': 'Paquete cada 21 días'};
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const store = {
@@ -90,9 +91,9 @@
   }
 
   async function cargarPacientes() {
-    const pacientes = await db('GET', '/rest/v1/pacientes?select=user_id,nombre,consulta_fecha&order=nombre.asc');
+    const pacientes = await db('GET', '/rest/v1/pacientes?select=user_id,nombre,consulta_fecha,paquete&order=nombre.asc');
     $('#lista-pacientes').innerHTML = pacientes.length
-      ? pacientes.map(p => `<li><button type="button" data-paciente="${esc(p.user_id)}" aria-current="${p.user_id === actual}"><strong>${esc(p.nombre)}</strong><small>${p.consulta_fecha ? `Consulta: ${esc(fecha(p.consulta_fecha))}` : 'Consulta por agendar'}</small></button></li>`).join('')
+      ? pacientes.map(p => `<li><button type="button" data-paciente="${esc(p.user_id)}" aria-current="${p.user_id === actual}"><strong>${esc(p.nombre)}</strong><small>${p.consulta_fecha ? `Consulta: ${esc(fecha(p.consulta_fecha))}` : 'Consulta por agendar'} · ${esc(PAQUETES[p.paquete] || 'Sin paquete')}</small></button></li>`).join('')
       : '<li class="vacio">Aún no hay pacientes.</li>';
   }
 
@@ -124,6 +125,7 @@
           <label class="ancho">Carpeta de Google Drive<input name="drive_url" type="url" placeholder="https://drive.google.com/drive/folders/…" value="${esc(p.drive_url || '')}"></label>
           <label>Próxima consulta (hora de Mérida)<input name="consulta_fecha" type="datetime-local" value="${aLocal(p.consulta_fecha)}"></label>
           <label>Lugar<input name="consulta_lugar" maxlength="80" placeholder="Cordemex" value="${esc(p.consulta_lugar || '')}"></label>
+          <label>Paquete<select name="paquete">${[['', 'Sin paquete'], ...Object.entries(PAQUETES)].map(([v, t]) => `<option value="${v}"${(p.paquete || '') === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
           <div class="acciones ancho"><button class="btn" type="submit">Guardar datos</button>${p.consulta_fecha ? '<button class="btn-sec" type="button" data-accion="por-agendar">Dejar consulta por agendar</button>' : ''}</div>
         </form>
       </section>
@@ -224,7 +226,7 @@
         case 'datos':
           if (!d.nombre.trim()) throw new Error('Escribe el nombre.');
           if (d.drive_url.trim() && !/^https:\/\/drive\.google\.com\//.test(d.drive_url.trim())) throw new Error('El enlace de la carpeta debe empezar con https://drive.google.com/');
-          await db('PATCH', `/rest/v1/pacientes?user_id=eq.${encodeURIComponent(actual)}`, {nombre: d.nombre.trim(), saludo: d.saludo, drive_url: d.drive_url.trim() || null, consulta_fecha: deLocal(d.consulta_fecha), consulta_lugar: d.consulta_lugar.trim() || null, actualizado_en: new Date().toISOString()});
+          await db('PATCH', `/rest/v1/pacientes?user_id=eq.${encodeURIComponent(actual)}`, {nombre: d.nombre.trim(), saludo: d.saludo, drive_url: d.drive_url.trim() || null, consulta_fecha: deLocal(d.consulta_fecha), consulta_lugar: d.consulta_lugar.trim() || null, paquete: d.paquete || null, actualizado_en: new Date().toISOString()});
           break;
         case 'pendiente':
           if (!d.texto.trim()) throw new Error('Escribe el pendiente.');
