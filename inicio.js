@@ -1,6 +1,7 @@
 // Inicio de Mi EasyWay: bienvenida, próxima consulta, pendientes, recursos y documentos.
 // Los datos vienen del manifest privado de cada paciente; la sesión y la API, de portal.js.
 (() => {
+  const WHATSAPP = '529994713282';
   // Textos aprobados (ChatGPT, 14 sep 2026). {nombre} se sustituye por el nombre de la paciente.
   const TEXTOS = {
     bienvenida: {femenino: 'Bienvenida, {nombre}', masculino: 'Bienvenido, {nombre}', neutro: 'Qué bueno verte aquí, {nombre}'},
@@ -64,10 +65,44 @@
     return `<aside class="aviso-inicio" aria-label="${TEXTOS.pantallaInicio[0]}"><div><strong>${TEXTOS.pantallaInicio[0]}</strong><p>${TEXTOS.pantallaInicio[1]} ${pasos}</p></div><button type="button" class="cerrar" data-cerrar-aviso aria-label="Cerrar aviso">×</button></aside>`;
   }
 
-  async function montar({manifest: m, sesion, api, userId}) {
+  // Datos del Inicio desde las tablas del panel. Si la paciente aún no tiene registro, se usan los del manifest.
+  async function datosDesdeBase({manifest, sesion, api, userId}) {
+    const s = await sesion();
+    if (!s) return manifest;
+    const leer = async ruta => {
+      const r = await api(ruta, {token: s.access_token, cache: 'no-store'});
+      if (!r.ok) throw new Error(ruta);
+      return r.json();
+    };
+    try {
+      const id = encodeURIComponent(userId);
+      const [pacientes, pendientes, recursos, novedades] = await Promise.all([
+        leer(`/rest/v1/pacientes?select=nombre,saludo,drive_url,consulta_fecha,consulta_lugar&user_id=eq.${id}`),
+        leer(`/rest/v1/pendientes?select=id,texto,creado_en&paciente_id=eq.${id}&order=creado_en.asc`),
+        leer(`/rest/v1/recursos?select=id,sesion,youtube_id,titulo,nota,creado_en&paciente_id=eq.${id}&order=sesion.asc.nullslast,creado_en.asc`),
+        leer(`/rest/v1/novedades_documentos?select=texto,creado_en&paciente_id=eq.${id}&order=creado_en.desc`)
+      ]);
+      const p = pacientes[0];
+      if (!p) return manifest;
+      const dia = iso => iso.slice(0, 10);
+      return {
+        ...manifest,
+        paciente: {nombre: p.nombre, saludo: p.saludo},
+        consulta: p.consulta_fecha ? {fecha: p.consulta_fecha, lugar: p.consulta_lugar} : {estado: 'por-agendar'},
+        pendientes: pendientes.map(x => ({id: x.id, texto: x.texto, agregado: dia(x.creado_en)})),
+        recursos: recursos.map(x => ({id: x.id, sesion: x.sesion, youtube: x.youtube_id, titulo: x.titulo, nota: x.nota, agregado: dia(x.creado_en)})),
+        documentos: {drive: p.drive_url, novedades: novedades.map(x => ({texto: x.texto, agregado: dia(x.creado_en)}))}
+      };
+    } catch {
+      return manifest;
+    }
+  }
+
+  async function montar({manifest, sesion, api, userId}) {
     const header = document.querySelector('body > header.topbar');
     const main = document.getElementById('main');
     if (!header || !main || document.getElementById('mi-inicio')) return;
+    const m = {whatsapp: WHATSAPP, ...(await datosDesdeBase({manifest, sesion, api, userId}))};
 
     // "Novedad" = agregado desde el día de la última visita en este dispositivo.
     const claveVisita = `easyeats-visita-${userId}`;

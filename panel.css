@@ -1,0 +1,60 @@
+/* Panel de Ricardo · Mi EasyWay */
+.panel{min-height:100dvh}
+.panel-top{height:72px;padding:14px clamp(20px,4vw,48px);gap:20px}
+.panel-top .brand img{width:128px}
+.panel-salir{margin-left:auto;min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:20px;background:none;font-size:13px}
+.panel-main{max-width:1320px;margin:0 auto;padding:28px clamp(16px,4vw,48px) 80px}
+.panel label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;letter-spacing:.3px}
+.panel-editor,.rejilla>*,.panel-lista{min-width:0}
+.editor-head code{overflow-wrap:anywhere}
+.panel input,.panel select{width:100%;min-width:0;min-height:44px;padding:0 12px;font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:#fffefa;border:1px solid #c9d6cd;border-radius:10px}
+.panel input[type=file]{padding:9px 10px}
+.panel input:focus,.panel select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #00806a40}
+.btn,.btn-sec{min-height:44px;padding:0 18px;border-radius:24px;font-size:14px;font-weight:700;white-space:nowrap}
+.btn{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn-sec{background:none;border:1px solid var(--ink)}
+.btn-quitar{flex:none;min-height:36px;padding:0 12px;border:1px solid #e3c9c4;border-radius:18px;background:none;color:#9b2c1f;font-size:13px}
+.ayuda{font-size:13px;line-height:1.55;color:#4d6660;margin-bottom:12px}
+.vacio{font-size:14px;color:#4d6660}
+.panel-login{display:grid;place-items:center;min-height:60vh}
+.panel-login form{display:flex;flex-direction:column;gap:14px;width:min(400px,100%)}
+.panel-login .eyebrow{color:var(--green)}
+.panel-login h1{font-size:56px;letter-spacing:-3px;margin-bottom:6px}
+.panel-msg{min-height:20px;font-size:14px;color:#9b2c1f}
+.panel-app{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start}
+.panel-lista{position:sticky;top:16px;padding:18px;border:1px solid var(--line);border-radius:18px;background:#fffefa}
+.panel-lista h2{font-size:18px;margin-bottom:10px}
+.panel-lista ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.panel-lista li button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;background:none;text-align:left}
+.panel-lista li button:hover{background:#04302a0a}
+.panel-lista li button[aria-current=true]{background:var(--ink);color:var(--paper)}
+.panel-lista small{font-size:12px;opacity:.8}
+.nuevo-paciente summary{cursor:pointer;font-size:14px;font-weight:700;padding:8px 0}
+.nuevo-paciente form{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.editor-head{margin-bottom:18px}
+.editor-head .eyebrow{color:var(--green)}
+.editor-head h1{font-size:clamp(32px,4vw,48px);letter-spacing:-.04em;margin:6px 0 4px}
+.editor-head code{font-size:12px;color:#4d6660}
+.bloque{padding:22px;margin-bottom:16px;border:1px solid var(--line);border-radius:18px;background:#fffefa}
+.bloque h2{font-size:19px;margin-bottom:14px}
+.rejilla{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rejilla .ancho{grid-column:1/-1}
+.acciones{display:flex;flex-wrap:wrap;gap:10px}
+.en-linea{display:flex;gap:10px;margin-top:12px}
+.en-linea input{flex:1;min-width:0}
+.filas{list-style:none;margin:0;padding:0}
+.filas li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.4}
+.filas li>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.filas small{display:block;margin-top:2px;font-size:12px;color:#4d6660}
+.filas img{flex:none;border-radius:6px;object-fit:cover}
+.panel-aviso{position:fixed;left:50%;bottom:24px;z-index:30;max-width:90vw;padding:12px 20px;border-radius:24px;background:var(--ink);color:var(--paper);font-size:14px;opacity:0;pointer-events:none;transform:translate(-50%,8px);transition:opacity .25s,transform .25s}
+.panel-aviso.visible{opacity:1;transform:translate(-50%,0)}
+.panel-aviso.error{background:#9b2c1f}
+@media (max-width:860px){
+  .panel-app{grid-template-columns:1fr}
+  .panel-lista{position:static}
+  .rejilla{grid-template-columns:1fr}
+  .en-linea{flex-direction:column}
+  .panel-top .method{display:none}
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://i.ytimg.com; font-src 'self'; connect-src 'self' https://*.supabase.co; base-uri 'self'; form-action 'self'"><meta name="referrer" content="no-referrer"><title>Panel · Mi EasyWay</title><link rel="icon" href="icono.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="panel.css"></head>
+<body class="panel">
+<header class="topbar panel-top"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="method">PANEL <i></i> MI EASYWAY</span><button id="salir" class="panel-salir" type="button" hidden>Cerrar sesión</button></header>
+<main class="panel-main">
+<section id="panel-login" class="panel-login" hidden>
+<form id="form-login" novalidate>
+<span class="eyebrow">ACCESO DE ADMINISTRADOR</span>
+<h1>Panel<span class="name-dot">.</span></h1>
+<label>Correo<input id="email" type="email" autocomplete="username" required></label>
+<label>Contraseña<input id="password" type="password" autocomplete="current-password" required></label>
+<button class="btn" type="submit">Entrar</button>
+<p id="login-msg" class="panel-msg" role="status"></p>
+</form>
+</section>
+<section id="panel-app" class="panel-app" hidden>
+<aside class="panel-lista">
+<h2>Pacientes</h2>
+<ul id="lista-pacientes"></ul>
+<details class="nuevo-paciente">
+<summary>Agregar paciente</summary>
+<form id="form-nuevo" novalidate>
+<p class="ayuda">Primero crea su cuenta en Supabase → Authentication → Users → Add user (con Auto Confirm) y copia su User UID.</p>
+<label>User UID<input name="user_id" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
+<label>Nombre<input name="nombre" required maxlength="80"></label>
+<label>Saludo<select name="saludo"><option value="femenino">Bienvenida</option><option value="masculino">Bienvenido</option><option value="neutro">Neutro</option></select></label>
+<button class="btn" type="submit">Agregar paciente</button>
+</form>
+</details>
+</aside>
+<div id="editor" class="panel-editor"><p class="vacio">Elige una paciente para empezar.</p></div>
+</section>
+</main>
+<p id="aviso" class="panel-aviso" role="status" aria-live="polite"></p>
+<script src="config.js"></script><script src="panel.js"></script>
+</body>
+</html>
