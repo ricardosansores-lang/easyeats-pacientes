@@ -15,9 +15,9 @@
     clear() { try { localStorage.removeItem(KEY); } catch {} }
   };
 
-  const api = (path, {token, ...opt} = {}) => fetch(C.supabaseUrl + path, {
+  const api = (path, {token, headers, ...opt} = {}) => fetch(C.supabaseUrl + path, {
     ...opt,
-    headers: {apikey: C.supabaseAnonKey, 'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})}
+    headers: {apikey: C.supabaseAnonKey, 'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {}), ...headers}
   });
 
   const toSession = d => ({
@@ -86,6 +86,8 @@
     await loadScript(content);
     await loadScript(app);
     addAccountButton();
+    // El Inicio es una mejora: si falla, la presentación sigue funcionando.
+    try { await window.MiInicio?.montar({manifest, sesion: currentSession, api, userId: s.user_id}); } catch {}
   }
 
   function addAccountButton() {
