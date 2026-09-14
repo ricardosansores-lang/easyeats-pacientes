@@ -53,8 +53,7 @@
 /* Fotografías: fondos decorativos. Si el archivo aún no existe, queda el degradado papel-verde. */
 .login-visual{position:relative;overflow:hidden;animation:loginFade .9s ease both .1s}
 .login-photo{position:absolute;background-color:#e6eee6;background-size:cover;background-position:center;transition:transform .6s ease}
-.login-photo-main{inset:0 0 24% 5%;border-radius:58% 0 0 42%/46% 0 0 54%;background-image:url(login-easyway-principal.jpg),linear-gradient(150deg,#dde8df,#eef2e8 60%,#e2ebe4);background-position:64% 40%}
-.login-photo-secondary{right:0;bottom:0;width:66%;height:40%;border-radius:62% 0 0 0/78% 0 0 0;box-shadow:-10px -10px 0 var(--paper);background-image:url(login-easyway-secundaria.jpg),linear-gradient(200deg,#e4ece3,#f1f0e6);background-position:50% 38%}
+.login-photo-main{inset:0 0 0 5%;border-radius:58% 0 0 42%/40% 0 0 60%;background-image:url(login-easyway-principal.jpg),linear-gradient(150deg,#dde8df,#eef2e8 60%,#e2ebe4);background-position:62% 35%}
 .login-visual:hover .login-photo-main{transform:scale(1.01)}
 .login-curve{position:absolute;z-index:1;left:49%;top:6%;width:25%;height:88%;pointer-events:none;overflow:visible}
 .login-curve path{fill:none;stroke:var(--green);stroke-width:1.5;opacity:.28;vector-effect:non-scaling-stroke}
@@ -71,7 +70,8 @@
 }
 @media (max-width:760px){
   .login-top{height:64px;padding:12px 20px}
-  .login-top .brand img{width:108px}
+  /* En celular "NUTRIÓLOGOS" se vuelve ilegible: se oculta recortando solo esa franja; el SVG oficial no se modifica. */
+  .login-top .brand img{width:150px;clip-path:polygon(0 0,100% 0,100% 70%,31% 70%,31% 100%,0 100%)}
   .login-method,.login-curve,.login-photo-secondary{display:none}
   .login-method-short{display:block}
   .login-wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}
