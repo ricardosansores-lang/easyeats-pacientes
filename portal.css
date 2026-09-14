@@ -1,19 +1,121 @@
-.login-screen{min-height:100dvh;display:flex;flex-direction:column}
-.login-wrap{flex:1;display:grid;place-items:center;padding:40px 5%}
-.login-card{width:min(440px,100%);animation:sceneIn .7s ease both}
-.login-card .eyebrow{color:var(--green)}
-.login-card h1{font-size:clamp(52px,7vw,84px);letter-spacing:-4px;line-height:1.02;margin:14px 0 12px}
-.login-card>p{line-height:1.6;font-size:15px;margin-bottom:26px}
-.field{display:block;margin-bottom:16px}
-.field span{display:block;font-size:11px;letter-spacing:1.4px;font-weight:700;margin-bottom:7px}
-.field input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fffefa;border:1px solid #cbd8cd;border-radius:3px 18px 3px 3px;padding:13px 15px}
-.field input:focus{outline:3px solid var(--green);outline-offset:2px;border-color:var(--green)}
-.primary{width:100%;background:var(--green);color:var(--paper);border-radius:30px;padding:14px 20px;font-size:15px;margin-top:8px}
-.primary:disabled{opacity:.6;cursor:wait}
-.portal-message{min-height:22px;font-size:13px;line-height:1.5;margin-top:14px}
+/* ---------- Acceso · Mi EasyWay. Encapsulado en .login-screen para no afectar la presentación. ---------- */
+.login-screen{--login-line:#c9d6cd;min-height:100dvh;display:flex;flex-direction:column;background:var(--paper);overflow-x:hidden}
+.login-top{height:72px;padding:14px clamp(20px,4.2vw,64px);gap:20px;justify-content:flex-start;border-bottom:0}
+.login-top .brand img{width:128px}
+.login-method{display:flex;align-items:center;gap:10px;height:28px;padding-left:20px;border-left:1px solid var(--line);font-size:11px;letter-spacing:2px;font-weight:700}
+.login-method i{width:4px;height:4px;border-radius:50%;background:var(--green)}
+.login-method-short{display:none;margin-left:auto;font-size:11px;letter-spacing:2px;font-weight:700}
+
+.login-wrap{position:relative;flex:1;display:grid;grid-template-columns:minmax(0,55fr) minmax(0,45fr);min-height:0}
+.login-copy{position:relative;z-index:2;display:flex;align-items:center;padding:clamp(16px,3.5vh,44px) clamp(20px,4.2vw,64px) clamp(28px,5vh,56px)}
+.login-card{width:min(540px,100%)}
+.login-card>*{animation:loginUp .6s cubic-bezier(.2,.7,.2,1) both}
+.login-card>:nth-child(2){animation-delay:.05s}.login-card>:nth-child(3){animation-delay:.1s}.login-card>:nth-child(4){animation-delay:.15s}
+.login-card>:nth-child(5),.login-card>:nth-child(6){animation-delay:.2s}.login-card>:nth-child(n+7){animation-delay:.25s}
+.login-card .eyebrow{display:block;color:var(--green);letter-spacing:2.4px}
+.login-card h1{max-width:10ch;margin:14px 0 18px;font-size:clamp(44px,5.4vw,80px);line-height:1;letter-spacing:-.045em}
+.login-promise{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:clamp(17px,1.5vw,21px);letter-spacing:-.2px;color:var(--green)}
+.login-promise::before{content:'';flex:none;width:32px;height:2px;border-radius:2px;background:var(--green)}
+.login-support{max-width:44ch;margin-bottom:clamp(20px,3.4vh,32px);font-size:16px;line-height:1.6}
+
+.login-field{margin-bottom:16px}
+.login-field label{display:block;margin-bottom:8px;font-size:11px;letter-spacing:1.6px;font-weight:700}
+.login-field input{width:100%;min-height:52px;padding:0 16px;font:inherit;font-size:16px;color:var(--ink);background:#fffefa;border:1px solid var(--login-line);border-radius:12px;transition:border-color .2s,box-shadow .2s}
+.login-field input:hover{border-color:#9fb5a8}
+.login-field input:focus,.login-field input:focus-visible{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #00806a40}
+.password-wrap{position:relative;display:block}
+.password-wrap input{padding-right:56px}
+.toggle-password{position:absolute;top:50%;right:4px;width:44px;height:44px;margin-top:-22px;display:grid;place-items:center;border-radius:10px;background:none;color:var(--ink)}
+.toggle-password:hover{background:#04302a0d}
+.toggle-password:focus-visible{outline:3px solid var(--green);outline-offset:0}
+.toggle-password svg{width:22px;height:22px}
+.toggle-password .eye-off,.toggle-password[aria-pressed=true] .eye-on{display:none}
+.toggle-password[aria-pressed=true] .eye-off{display:block}
+
+.login-submit{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:54px;margin-top:10px;padding:0 48px;background:var(--ink);color:var(--paper);border-radius:30px;font-size:16px;font-weight:700;letter-spacing:-.1px;transition:background .2s,transform .2s}
+.login-submit::before{content:'';position:absolute;left:24px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--lime)}
+.login-submit:hover{background:#0b4239}
+.login-submit:active{transform:translateY(1px)}
+.btn-arrow{font-size:19px;transition:transform .2s}
+.login-submit:hover .btn-arrow{transform:translateX(3px)}
+.login-submit:disabled{opacity:1;cursor:wait}
+.login-submit:disabled .btn-label,.login-submit:disabled .btn-arrow{opacity:.4}
+.login-submit:disabled::after{content:'';position:absolute;right:22px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;border:2px solid #fbfaf555;border-top-color:var(--lime);animation:loginSpin .8s linear infinite}
+
+.portal-message{min-height:22px;margin-top:14px;font-size:14px;line-height:1.5}
 .portal-message.error{color:#9b2c1f}
-.link-btn{background:none;padding:0 0 2px;color:var(--green);border-bottom:1px solid var(--green);font-size:13px}
-.login-card .login-foot{font-size:12px;line-height:1.6;border-top:1px solid var(--line);margin:22px 0 0;padding-top:14px}
+.login-screen .portal-message:not(:empty){padding:10px 14px;border-radius:10px;background:#00806a12}
+.login-screen .portal-message.error:not(:empty){background:#9b2c1f0f}
+.link-btn{padding:0 0 2px;background:none;color:var(--green);border-bottom:1px solid var(--green);font-size:14px}
+.login-help{margin-top:16px;font-size:14px;line-height:1.5}
+.login-help a{color:var(--green);font-weight:700;text-underline-offset:3px}
+
+/* Fotografías: fondos decorativos. Si el archivo aún no existe, queda el degradado papel-verde. */
+.login-visual{position:relative;overflow:hidden;animation:loginFade .9s ease both .1s}
+.login-photo{position:absolute;background-color:#e6eee6;background-size:cover;background-position:center;transition:transform .6s ease}
+.login-photo-main{inset:0 0 24% 5%;border-radius:58% 0 0 42%/46% 0 0 54%;background-image:url(login-easyway-principal.jpg),linear-gradient(150deg,#dde8df,#eef2e8 60%,#e2ebe4);background-position:64% 40%}
+.login-photo-secondary{right:0;bottom:0;width:66%;height:40%;border-radius:62% 0 0 0/78% 0 0 0;box-shadow:-10px -10px 0 var(--paper);background-image:url(login-easyway-secundaria.jpg),linear-gradient(200deg,#e4ece3,#f1f0e6);background-position:50% 38%}
+.login-visual:hover .login-photo-main{transform:scale(1.01)}
+.login-curve{position:absolute;z-index:1;left:49%;top:6%;width:25%;height:88%;pointer-events:none;overflow:visible}
+.login-curve path{fill:none;stroke:var(--green);stroke-width:1.5;opacity:.28;vector-effect:non-scaling-stroke}
+
+@keyframes loginUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes loginFade{from{opacity:0}to{opacity:1}}
+@keyframes loginSpin{to{transform:rotate(360deg)}}
+
+@media (min-width:761px) and (max-height:820px){
+  .login-top{height:62px}
+  .login-card h1{margin:10px 0 12px;font-size:clamp(40px,4.4vw,64px)}
+  .login-support{margin-bottom:18px}
+  .login-field{margin-bottom:12px}
+}
+@media (max-width:760px){
+  .login-top{height:64px;padding:12px 20px}
+  .login-top .brand img{width:108px}
+  .login-method,.login-curve,.login-photo-secondary{display:none}
+  .login-method-short{display:block}
+  .login-wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .login-visual{order:-1;height:clamp(130px,24vh,200px);margin:0 20px;border-radius:110px 22px 110px 22px/90px 22px 90px 22px}
+  .login-photo-main{inset:0;border-radius:inherit;background-image:url(login-easyway-principal-movil.jpg),linear-gradient(150deg,#dde8df,#eef2e8 60%,#e2ebe4);background-position:60% 30%}
+  .login-copy{align-items:flex-start;padding:20px 22px 32px}
+  .login-card h1{margin:10px 0 12px;font-size:clamp(38px,11.5vw,52px)}
+  .login-promise{font-size:17px}
+  .login-support{margin-bottom:20px;font-size:15px}
+  .login-field input{min-height:50px}
+}
+/* Teléfonos bajos (p. ej. 320×568): el botón debe verse sin desplazarse. La barra ya dice MI EASYWAY. */
+@media (max-width:760px) and (max-height:700px){
+  .login-top{height:56px;padding:8px 20px}
+  .login-visual{height:84px}
+  .login-copy{padding-top:12px}
+  .login-card .eyebrow{display:none}
+  .login-card h1{margin:0 0 8px;font-size:34px}
+  .login-promise{margin-bottom:6px;font-size:15px}
+  .login-promise::before{width:20px}
+  .login-support{margin-bottom:12px;font-size:14px;line-height:1.5}
+  .login-field{margin-bottom:10px}
+  .login-field label{margin-bottom:5px}
+  .login-field input{min-height:48px}
+  .login-submit{min-height:50px;margin-top:6px}
+}
+@media (max-width:360px){
+  .login-submit{gap:8px;padding:0 34px;font-size:15px;white-space:nowrap}
+  .login-submit::before{left:18px}
+}
+@media (max-height:500px) and (max-width:950px){
+  .login-wrap{grid-template-columns:1fr}
+  .login-visual,.login-curve{display:none}
+}
+body.paused .login-screen,body.paused .login-screen *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){.login-screen,.login-screen *{animation:none!important;transition:none!important}}
+
+/* ---------- Mi cuenta (dentro de la presentación) ---------- */
+.account-dialog .field{display:block;margin-bottom:16px}
+.account-dialog .field span{display:block;font-size:11px;letter-spacing:1.4px;font-weight:700;margin-bottom:7px}
+.account-dialog .field input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fffefa;border:1px solid #cbd8cd;border-radius:3px 18px 3px 3px;padding:13px 15px}
+.account-dialog .field input:focus{outline:3px solid var(--green);outline-offset:2px;border-color:var(--green)}
+.account-dialog .primary{width:100%;background:var(--green);color:var(--paper);border-radius:30px;padding:14px 20px;font-size:15px;margin-top:8px}
+.account-dialog .primary:disabled{opacity:.6;cursor:wait}
 .tools .account{width:auto;border-radius:20px;font-size:12px;padding:0 14px}
 .account-dialog{width:min(440px,92vw);background:var(--paper);border-radius:7px;padding:26px 28px;box-shadow:0 32px 100px #001b1840}
 .account-dialog .eyebrow{color:var(--green)}

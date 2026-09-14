@@ -1,21 +1,26 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#FBFAF5"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co; base-uri 'self'; form-action 'self'"><meta name="referrer" content="no-referrer"><title>Tu espacio · EasyEats</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="portal.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#FBFAF5"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co; base-uri 'self'; form-action 'self'"><meta name="referrer" content="no-referrer"><title>Mi EasyWay · EasyEats</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="portal.css"></head>
 <body>
 <div id="login-screen" class="login-screen">
-<header class="topbar"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="method">THE EASY WAY <i></i> TU ESPACIO</span></header>
+<header class="topbar login-top"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="login-method">THE EASYWAY <i aria-hidden="true"></i> MI ESPACIO</span><span class="login-method-short">MI EASYWAY</span></header>
 <main class="login-wrap">
+<svg class="login-curve" viewBox="0 0 320 420" aria-hidden="true" focusable="false"><path d="M178 18C262 4 314 86 280 196c-28 92-92 204-176 196C20 384-6 292 42 214c38-62 36-106 60-148 18-32 44-44 76-48Z"/></svg>
+<section class="login-copy">
 <form id="login-form" class="login-card" novalidate>
-<span class="eyebrow">ACCESO PRIVADO</span>
-<h1>Tu espacio<span class="name-dot">.</span></h1>
-<p>Entra con el correo y la contraseña que te compartió tu nutriólogo.</p>
-<label class="field"><span>CORREO</span><input id="email" type="email" autocomplete="username" required></label>
-<label class="field"><span>CONTRASEÑA</span><input id="password" type="password" autocomplete="current-password" required></label>
-<button class="primary" type="submit">Entrar ↗</button>
+<span class="eyebrow">MI EASYWAY</span>
+<h1>Tu proceso sigue aquí.</h1>
+<p class="login-promise">Un proceso que no se pierde entre consultas.</p>
+<p class="login-support">Consulta tu ruta, vuelve a lo que has trabajado y mira con claridad qué sigue.</p>
+<div class="login-field"><label for="email">CORREO</label><input id="email" type="email" autocomplete="username" required></div>
+<div class="login-field"><label for="password">CONTRASEÑA</label><span class="password-wrap"><input id="password" type="password" autocomplete="current-password" required><button class="toggle-password" type="button" aria-controls="password" aria-pressed="false" aria-label="Mostrar contraseña" hidden><svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.9 0 3.5-.6 4.9-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span></div>
+<button class="primary login-submit" type="submit"><span class="btn-label">Continuar mi EasyWay</span><span class="btn-arrow" aria-hidden="true">→</span></button>
 <p id="portal-message" class="portal-message" role="status"></p>
 <button id="login-logout" class="link-btn" type="button" hidden>Cerrar sesión</button>
-<p class="login-foot">¿Olvidaste tu contraseña? Escríbele a tu nutriólogo para restablecerla.</p>
+<p class="login-help">¿Necesitas ayuda? Escríbenos por <a href="https://wa.me/529994713282?text=Hola%2C%20necesito%20ayuda%20para%20entrar%20a%20Mi%20EasyWay." target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
 </form>
+</section>
+<aside class="login-visual" aria-hidden="true"><div class="login-photo login-photo-main"></div><div class="login-photo login-photo-secondary"></div></aside>
 </main>
 </div>
 <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
@@ -31,6 +36,6 @@
 <hr>
 <button id="logout" class="secondary" type="button">Cerrar sesión</button>
 </dialog>
-<script src="config.js"></script><script src="portal.js"></script>
+<script src="config.js"></script><script src="portal.js"></script><script src="acceso.js"></script>
 </body>
 </html>
