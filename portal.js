@@ -47,7 +47,8 @@
   }
 
   async function privateFile(s, name, as = 'text') {
-    const r = await api(`/storage/v1/object/authenticated/${BUCKET}/${s.user_id}/${name}`, {token: s.access_token});
+    // no-store: sin esto el navegador puede mostrar hasta una hora la versión anterior de un archivo actualizado.
+    const r = await api(`/storage/v1/object/authenticated/${BUCKET}/${s.user_id}/${name}`, {token: s.access_token, cache: 'no-store'});
     if (r.status === 401 || r.status === 403) throw new Error('sesion');
     if (!r.ok) throw new Error('sin-contenido');
     return as === 'blob' ? r.blob() : r.text();
