@@ -1,2 +1,10 @@
+# Solo los lectores de vista previa de enlaces (WhatsApp, Facebook) pueden leer la portada pública.
+# Buscadores bloqueados. El contenido de pacientes no está aquí: vive en Supabase y requiere sesión.
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
 User-agent: *
 Disallow: /
