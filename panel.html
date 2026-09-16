@@ -4,6 +4,7 @@
 <body class="panel">
 <header class="topbar panel-top"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="method">PANEL <i></i> MI EASYWAY</span><button id="salir" class="panel-salir" type="button" hidden>Cerrar sesión</button></header>
 <main class="panel-main">
+<nav id="tabs" class="panel-tabs" hidden><button type="button" data-vista="pacientes" class="on">Pacientes</button><button type="button" data-vista="codigo">Código y mejoras</button></nav>
 <section id="panel-login" class="panel-login" hidden>
 <form id="form-login" novalidate>
 <span class="eyebrow">ACCESO DE ADMINISTRADOR</span>
@@ -31,6 +32,7 @@
 </aside>
 <div id="editor" class="panel-editor"><p class="vacio">Elige una paciente para empezar.</p></div>
 </section>
+<section id="panel-codigo" class="panel-editor" hidden></section>
 </main>
 <p id="aviso" class="panel-aviso" role="status" aria-live="polite"></p>
 <script src="config.js"></script><script src="panel.js"></script>

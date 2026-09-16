@@ -65,6 +65,37 @@
     });
   }
 
+  // Mejoras publicadas desde el panel. Se aplican ENCIMA de lo que ya vino de GitHub:
+  // si esto falla, el espacio sigue funcionando con la versión del repositorio.
+  async function aplicarMejoras(s) {
+    const preview = new URLSearchParams(location.search).get('preview');
+    // Un borrador solo se lo entrega Supabase al super admin: la regla vive en la base, no aquí.
+    const filtro = preview ? `id=eq.${encodeURIComponent(preview)}` : 'producto=eq.easyway&estado=eq.publicado';
+    const r = await api(`/rest/v1/codigo_versiones?select=archivo,ruta,version&${filtro}`, {token: s.access_token, cache: 'no-store'});
+    if (!r.ok) return;
+    const versiones = await r.json();
+    if (!versiones.length) return;
+
+    for (const v of versiones) {
+      const a = await api(`/storage/v1/object/authenticated/plataforma/${v.ruta}`, {token: s.access_token, cache: 'no-store'});
+      if (!a.ok) continue;
+      const codigo = await a.text();
+      if (v.archivo.endsWith('.css')) {
+        const style = document.createElement('style');
+        style.textContent = codigo;
+        document.head.appendChild(style);
+      } else {
+        await loadScript(codigo);
+      }
+    }
+    if (preview) {
+      const b = document.createElement('div');
+      b.className = 'preview-banner';
+      b.textContent = `Versión de prueba: ${versiones.map(v => `${v.archivo} v${v.version}`).join(', ')} · solo tú la ves`;
+      document.body.prepend(b);
+    }
+  }
+
   function message(text, error = false) {
     const m = $('#portal-message');
     m.textContent = text;
@@ -87,6 +118,9 @@
     await loadScript(content);
     await loadScript(app);
     addAccountButton();
+    // Antes de montar el Inicio: si hay una versión publicada de inicio.js, esta
+    // sobrescribe window.MiInicio y es la que se monta. Si algo falla, se sigue con la de GitHub.
+    try { await aplicarMejoras(s); } catch {}
     // El Inicio es una mejora: si falla, la presentación sigue funcionando.
     try { await window.MiInicio?.montar({manifest, sesion: currentSession, api, userId: s.user_id}); } catch {}
   }

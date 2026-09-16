@@ -8,6 +8,19 @@
   let actual = null;
   const PAQUETES = {'cada-7': 'Paquete cada 7 días', 'cada-15': 'Paquete cada 15 días', 'cada-21': 'Paquete cada 21 días'};
 
+  // --- Código y mejoras -------------------------------------------------------
+  // Solo se publica desde aquí lo que corre DESPUÉS del acceso. El cascarón que hace
+  // el login (index.html, config.js, portal.js, acceso.js) vive en GitHub a propósito:
+  // si un archivo malo lo rompiera, nadie podría entrar ni siquiera a este panel.
+  const PRODUCTO = 'easyway';
+  const BUCKET_CODIGO = 'plataforma';
+  const MAX_VERSIONES = 10;
+  const PUBLICABLES = {
+    'inicio.js': {nombre: 'Pantalla de Inicio', tipo: 'text/javascript', ext: ['js']},
+    'extra.css': {nombre: 'Ajustes de estilo', tipo: 'text/css', ext: ['css']}
+  };
+  let superAdmin = false;
+
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const store = {
     get() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
@@ -84,6 +97,10 @@
       $('#salir').hidden = false;
       return;
     }
+    // La pestaña de código solo aparece para el super admin; la base ya lo impide
+    // igual, pero no tiene caso mostrar un botón que va a fallar.
+    try { superAdmin = await db('POST', '/rest/v1/rpc/es_super_admin', {}) === true; } catch {}
+    $('#tabs').hidden = !superAdmin;
     $('#panel-login').hidden = true;
     $('#panel-app').hidden = false;
     $('#salir').hidden = false;
@@ -170,6 +187,152 @@
       if (!r.ok) throw new Error(`No se pudo subir ${archivo.name}.`);
     }
   }
+
+  const rutaVersion = (archivo, version) => `${PRODUCTO}/${archivo}/v${version}`;
+
+  async function anotar(versionId, archivo, version, accion) {
+    const s = await sesion();
+    await db('POST', '/rest/v1/codigo_bitacora', {version_id: versionId, producto: PRODUCTO, archivo, version, accion, quien: s.user_id}).catch(() => {});
+  }
+
+  async function cargarCodigo() {
+    const [versiones, bitacora] = await Promise.all([
+      db('GET', `/rest/v1/codigo_versiones?select=*&producto=eq.${PRODUCTO}&order=archivo.asc,version.desc`),
+      db('GET', `/rest/v1/codigo_bitacora?select=*&producto=eq.${PRODUCTO}&order=cuando.desc&limit=12`).catch(() => [])
+    ]);
+    // Tolerante a propósito: una fecha vacía o rara no debe dejar la pantalla en blanco.
+    const cuando = iso => {
+      const d = iso ? new Date(iso) : null;
+      return d && !isNaN(d) ? new Intl.DateTimeFormat('es-MX', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}).format(d) : 'sin fecha';
+    };
+    const peso = b => b ? `${Math.max(1, Math.round(b / 1024))} KB` : '';
+
+    const bloques = Object.entries(PUBLICABLES).map(([archivo, meta]) => {
+      const mias = versiones.filter(v => v.archivo === archivo);
+      const viva = mias.find(v => v.estado === 'publicado');
+      const filas = mias.map(v => {
+        const publicada = v.estado === 'publicado';
+        const etiqueta = publicada ? 'EN LÍNEA' : v.estado === 'borrador' ? 'Sin publicar' : 'Anterior';
+        const acciones = [
+          `<a class="btn-sec" href="index.html?preview=${esc(v.id)}" target="_blank" rel="noopener">Probar</a>`,
+          publicada ? '' : `<button type="button" class="btn" data-accion="publicar-codigo" data-id="${esc(v.id)}" data-archivo="${esc(archivo)}" data-version="${v.version}">${viva && v.version < viva.version ? 'Volver a esta' : 'Publicar'}</button>`,
+          publicada ? '' : `<button type="button" class="btn-quitar" data-accion="quitar-codigo" data-id="${esc(v.id)}" data-ruta="${esc(v.ruta)}" data-archivo="${esc(archivo)}" data-version="${v.version}">Quitar</button>`
+        ].join('');
+        return `<li class="${publicada ? 'viva' : ''}"><span>v${v.version} · ${esc(etiqueta)}${v.notas ? ` — ${esc(v.notas)}` : ''}<small>${esc(cuando(v.subido_en))}${v.bytes ? ` · ${peso(v.bytes)}` : ''}</small></span><span class="acciones-fila">${acciones}</span></li>`;
+      });
+      return `<section class="bloque"><h2>${esc(meta.nombre)} <code>${esc(archivo)}</code></h2>
+        <p class="ayuda">${viva ? `En línea ahora: <strong>v${viva.version}</strong>, publicada el ${esc(cuando(viva.publicado_en || viva.subido_en))}` :'Sin versión publicada: los pacientes ven lo que está en GitHub.'}</p>
+        <ul class="filas">${filas.length ? filas.join('') : '<li class="vacio">Aún no subes ninguna versión.</li>'}</ul>
+        <form data-form="codigo" data-archivo="${esc(archivo)}" class="rejilla" novalidate>
+          <label class="ancho">Archivo nuevo<input name="archivo" type="file" required accept=".${meta.ext.join(',.')}"></label>
+          <label class="ancho">¿Qué cambia? (opcional)<input name="notas" maxlength="300" placeholder="Por ejemplo: textos nuevos del Inicio."></label>
+          <div class="acciones ancho"><button class="btn" type="submit">Subir versión</button></div>
+        </form></section>`;
+    });
+
+    const registro = bitacora.length
+      ? `<ul class="filas">${bitacora.map(b => `<li><span>${esc(b.archivo)} v${b.version} · ${esc(b.accion)}<small>${esc(cuando(b.cuando))}</small></span></li>`).join('')}</ul>`
+      : '<p class="vacio">Todavía no hay movimientos.</p>';
+
+    $('#panel-codigo').innerHTML = `
+      <div class="editor-head"><span class="eyebrow">MI EASYWAY</span><h1>Código y mejoras</h1></div>
+      <p class="ayuda">Sube el archivo, pruébalo tú con «Probar» y solo entonces publícalo.
+        «Probar» abre el portal cargando esa versión sin que nadie más la vea.
+        Si algo sale mal, «Volver a esta» en una versión anterior lo deshace al instante.
+        El acceso y el cascarón del portal no se actualizan desde aquí: esos van por GitHub.</p>
+      ${bloques.join('')}
+      <section class="bloque"><h2>Últimos movimientos</h2>${registro}</section>`;
+  }
+
+  async function subirVersion(archivo, file, notas) {
+    const meta = PUBLICABLES[archivo];
+    if (!meta) throw new Error('Ese archivo no se puede publicar desde el panel.');
+    if (!file) throw new Error('Elige un archivo.');
+    if (!file.size) throw new Error('El archivo está vacío.');
+    if (file.size > 2 * 1024 * 1024) throw new Error('El archivo pasa de 2 MB. Revisa que sea el correcto.');
+    const s = await sesion();
+    if (!s) throw new Error('Tu sesión terminó.');
+
+    // Se calcula con el máximo de TODAS las versiones, no con la primera fila:
+    // así el número es correcto aunque el servidor devuelva otro orden.
+    const previas = await db('GET', `/rest/v1/codigo_versiones?select=version&producto=eq.${PRODUCTO}&archivo=eq.${encodeURIComponent(archivo)}`);
+    const version = previas.reduce((mayor, v) => Math.max(mayor, v.version || 0), 0) + 1;
+    const ruta = rutaVersion(archivo, version);
+
+    const r = await api(`/storage/v1/object/${BUCKET_CODIGO}/${ruta}`, {method: 'POST', token: s.access_token, headers: {'x-upsert': 'true', 'Content-Type': meta.tipo}, body: file});
+    if (!r.ok) throw new Error('No se pudo subir el archivo a Supabase.');
+
+    // El id se genera aquí para poder anotarlo en la bitácora sin pedirlo de vuelta.
+    const id = crypto.randomUUID();
+    await db('POST', '/rest/v1/codigo_versiones', {id, producto: PRODUCTO, archivo, version, ruta, estado: 'borrador', notas: notas.trim() || null, bytes: file.size, subido_por: s.user_id});
+    await anotar(id, archivo, version, 'subida');
+    await podar(archivo);
+    return version;
+  }
+
+  async function publicarVersion(id, archivo, version) {
+    // Primero se archiva la que está en línea: la base no permite dos publicadas a la vez.
+    await db('PATCH', `/rest/v1/codigo_versiones?producto=eq.${PRODUCTO}&archivo=eq.${encodeURIComponent(archivo)}&estado=eq.publicado`, {estado: 'archivado'});
+    await db('PATCH', `/rest/v1/codigo_versiones?id=eq.${encodeURIComponent(id)}`, {estado: 'publicado', publicado_en: new Date().toISOString()});
+    await anotar(id, archivo, version, 'publicada');
+  }
+
+  async function podar(archivo) {
+    const todas = await db('GET', `/rest/v1/codigo_versiones?select=id,version,ruta,estado&producto=eq.${PRODUCTO}&archivo=eq.${encodeURIComponent(archivo)}&order=version.desc`);
+    for (const v of todas.slice(MAX_VERSIONES).filter(x => x.estado !== 'publicado')) {
+      await db('DELETE', `/storage/v1/object/${BUCKET_CODIGO}`, {prefixes: [v.ruta]}).catch(() => {});
+      await db('DELETE', `/rest/v1/codigo_versiones?id=eq.${encodeURIComponent(v.id)}`).catch(() => {});
+    }
+  }
+
+  function verVista(vista) {
+    const codigo = vista === 'codigo';
+    $('#panel-app').hidden = codigo;
+    $('#panel-codigo').hidden = !codigo;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.vista === vista));
+    if (codigo) cargarCodigo().catch(err => avisar(err.message, true));
+  }
+
+  $('#tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-vista]');
+    if (b) verVista(b.dataset.vista);
+  });
+
+  $('#panel-codigo').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.dataset.form !== 'codigo') return;
+    const boton = f.querySelector('[type=submit]');
+    boton.disabled = true;
+    try {
+      const version = await subirVersion(f.dataset.archivo, f.elements.archivo.files[0], f.elements.notas.value);
+      avisar(`Subida la v${version}. Pruébala antes de publicar.`);
+      await cargarCodigo();
+    } catch (err) {
+      avisar(err.message, true);
+    } finally {
+      boton.disabled = false;
+    }
+  });
+
+  $('#panel-codigo').addEventListener('click', async e => {
+    const b = e.target.closest('[data-accion]');
+    if (!b) return;
+    try {
+      if (b.dataset.accion === 'publicar-codigo') {
+        if (!confirm(`¿Publicar la v${b.dataset.version} de ${b.dataset.archivo}? La verán todos los pacientes al entrar.`)) return;
+        await publicarVersion(b.dataset.id, b.dataset.archivo, Number(b.dataset.version));
+        avisar('Publicada. Recuerda recargar con Cmd + Shift + R para verla.');
+      } else if (b.dataset.accion === 'quitar-codigo') {
+        if (!confirm(`¿Quitar la v${b.dataset.version} de ${b.dataset.archivo}? Ya no podrás volver a ella.`)) return;
+        await db('DELETE', `/storage/v1/object/${BUCKET_CODIGO}`, {prefixes: [b.dataset.ruta]}).catch(() => {});
+        await db('DELETE', `/rest/v1/codigo_versiones?id=eq.${encodeURIComponent(b.dataset.id)}`);
+        await anotar(null, b.dataset.archivo, Number(b.dataset.version), 'borrada');
+        avisar('Versión quitada.');
+      } else return;
+      await cargarCodigo();
+    } catch (err) { avisar(err.message, true); }
+  });
 
   $('#form-login').addEventListener('submit', async e => {
     e.preventDefault();

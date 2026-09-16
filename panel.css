@@ -58,3 +58,15 @@
   .en-linea{flex-direction:column}
   .panel-top .method{display:none}
 }
+
+/* Pestañas del panel y sección Código y mejoras */
+.panel-tabs{display:flex;gap:8px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.panel-tabs button{padding:10px 18px;border:0;border-bottom:2px solid transparent;background:none;color:#4d6660;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.panel-tabs button.on{border-bottom-color:var(--ink);color:var(--ink)}
+.filas li.viva{background:color-mix(in srgb,var(--lime) 18%,transparent);border-radius:8px;padding-inline:10px}
+.acciones-fila{display:flex;flex-wrap:wrap;gap:8px;flex:none}
+.acciones-fila .btn,.acciones-fila .btn-sec,.acciones-fila .btn-quitar{padding:6px 14px;font-size:13px;text-decoration:none;white-space:nowrap}
+@media (max-width:860px){
+  .panel-tabs button{flex:1;padding-inline:8px}
+  .filas li{flex-wrap:wrap}
+}
