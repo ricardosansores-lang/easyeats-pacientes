@@ -67,15 +67,42 @@
     return j?.message || 'No se pudo completar la acción.';
   }
 
-  async function db(method, path, body) {
+  async function db(method, path, body, prefer = 'return=minimal') {
     const s = await sesion();
     if (!s) { mostrarLogin('Tu sesión terminó. Vuelve a entrar.'); throw new Error('Tu sesión terminó.'); }
-    const r = await api(path, {method, token: s.access_token, cache: 'no-store', headers: method === 'GET' ? {} : {Prefer: 'return=minimal'}, body: body === undefined ? undefined : JSON.stringify(body)});
+    const r = await api(path, {method, token: s.access_token, cache: 'no-store', headers: method === 'GET' ? {} : {Prefer: prefer}, body: body === undefined ? undefined : JSON.stringify(body)});
     const texto = await r.text();
     const json = texto ? (() => { try { return JSON.parse(texto); } catch { return null; } })() : null;
     if (!r.ok) throw new Error(traducir(r.status, json));
     return json;
   }
+
+  // Editar conserva el mismo registro: el historial de "completado" de un pendiente no se pierde.
+  // Si la base no deja modificar, Supabase no marca error: solo cambia cero filas. Por eso se pide
+  // la fila de vuelta y se revisa que haya llegado.
+  const TABLAS = {pendiente: 'pendientes', recurso: 'recursos', novedad: 'novedades_documentos'};
+  const SIN_PERMISO_EDITAR = 'No se guardó: la base todavía no permite editar. Falta correr en Supabase el SQL «Mi EasyWay 08 · Permitir editar».';
+  async function editar(tipo, id, cambios) {
+    let filas;
+    try {
+      filas = await db('PATCH', `/rest/v1/${TABLAS[tipo]}?id=eq.${encodeURIComponent(id)}`, cambios, 'return=representation');
+    } catch (err) {
+      throw err.message === traducir(403) ? new Error(SIN_PERMISO_EDITAR) : err;
+    }
+    if (!filas?.length) throw new Error(SIN_PERMISO_EDITAR);
+  }
+  let registros = new Map();
+  const formEdicion = (tipo, x) => {
+    const botones = `<button class="btn" type="submit">Guardar</button><button class="btn-sec" type="button" data-accion="cancelar">Cancelar</button>`;
+    const abre = clase => `<form data-form="editar" data-tipo="${tipo}" data-id="${esc(x.id)}" class="${clase} edicion" novalidate>`;
+    if (tipo === 'recurso') return `${abre('rejilla')}
+      <label class="ancho">Enlace de YouTube<input name="url" required value="https://youtu.be/${esc(x.youtube_id)}"></label>
+      <label>Sesión<input name="sesion" type="number" min="1" max="24" value="${x.sesion ?? ''}"></label>
+      <label>Título<input name="titulo" required maxlength="140" value="${esc(x.titulo)}"></label>
+      <label class="ancho">Nota para la paciente (opcional)<input name="nota" maxlength="300" value="${esc(x.nota || '')}"></label>
+      <div class="acciones ancho">${botones}</div></form>`;
+    return `${abre('en-linea')}<input name="texto" required maxlength="${tipo === 'pendiente' ? 300 : 200}" aria-label="Editar texto" value="${esc(x.texto)}">${botones}</form>`;
+  };
 
   let avisoTimer;
   function avisar(texto, error = false) {
@@ -139,6 +166,8 @@
     const completado = new Map(hechos.map(h => [h.pendiente_id, h.completado_en]));
     const lista = (items, fila, vacio) => `<ul class="filas">${items.length ? items.map(fila).join('') : `<li class="vacio">${vacio}</li>`}</ul>`;
     const quitar = (accion, id, etiqueta) => `<button type="button" class="btn-quitar" data-accion="${accion}" data-id="${esc(id)}" aria-label="Quitar: ${esc(etiqueta)}">Quitar</button>`;
+    const acciones = (tipo, x, etiqueta) => `<span class="acciones-fila"><button type="button" class="btn-sec" data-accion="editar" data-tipo="${tipo}" data-id="${esc(x.id)}" aria-label="Editar: ${esc(etiqueta)}">Editar</button>${quitar(`quitar-${tipo}`, x.id, etiqueta)}</span>`;
+    registros = new Map([...pendientes, ...recursos, ...novedades].map(x => [x.id, x]));
     const archivosVisibles = (archivos || []).filter(a => a.name && !a.name.startsWith('.'));
 
     $('#editor').innerHTML = `
@@ -157,12 +186,12 @@
       </section>
 
       <section class="bloque"><h2>Pendientes</h2>
-        ${lista(pendientes, x => `<li><span>${esc(x.texto)}<small>${completado.has(x.id) ? `✓ Completado el ${esc(fecha(completado.get(x.id)))}` : `Agregado el ${esc(fecha(x.creado_en))}`}</small></span>${quitar('quitar-pendiente', x.id, x.texto)}</li>`, 'Sin pendientes.')}
+        ${lista(pendientes, x => `<li><span>${esc(x.texto)}<small>${completado.has(x.id) ? `✓ Completado el ${esc(fecha(completado.get(x.id)))}` : `Agregado el ${esc(fecha(x.creado_en))}`}</small></span>${acciones('pendiente', x, x.texto)}</li>`, 'Sin pendientes.')}
         <form data-form="pendiente" class="en-linea" novalidate><input name="texto" required maxlength="300" aria-label="Nuevo pendiente" placeholder="Nuevo pendiente, por ejemplo: Enviar análisis clínicos."><button class="btn" type="submit">Agregar</button></form>
       </section>
 
       <section class="bloque"><h2>Videos</h2>
-        ${lista(recursos, x => `<li><img src="https://i.ytimg.com/vi/${esc(x.youtube_id)}/default.jpg" alt="" width="64" height="48"><span>${esc(x.titulo)}<small>${x.sesion ? `Mes ${Math.ceil(x.sesion / 2)} · Sesión ${x.sesion}` : 'Sin sesión'}${x.nota ? ` · ${esc(x.nota)}` : ''}</small></span>${quitar('quitar-recurso', x.id, x.titulo)}</li>`, 'Sin videos.')}
+        ${lista(recursos, x => `<li><img src="https://i.ytimg.com/vi/${esc(x.youtube_id)}/default.jpg" alt="" width="64" height="48"><span>${esc(x.titulo)}<small>${x.sesion ? `Mes ${Math.ceil(x.sesion / 2)} · Sesión ${x.sesion}` : 'Sin sesión'}${x.nota ? ` · ${esc(x.nota)}` : ''}</small></span>${acciones('recurso', x, x.titulo)}</li>`, 'Sin videos.')}
         <form data-form="recurso" class="rejilla" novalidate>
           <label class="ancho">Enlace de YouTube<input name="url" required placeholder="https://youtu.be/… (también sirve el código para integrar)"></label>
           <label>Sesión<input name="sesion" type="number" min="1" max="24" placeholder="2"></label>
@@ -174,7 +203,7 @@
 
       <section class="bloque"><h2>Novedades en documentos</h2>
         <p class="ayuda">Úsalo cuando dejes algo nuevo en su carpeta de Drive: al entrar verá la etiqueta "Novedad".</p>
-        ${lista(novedades, x => `<li><span>${esc(x.texto)}<small>${esc(fecha(x.creado_en))}</small></span>${quitar('quitar-novedad', x.id, x.texto)}</li>`, 'Sin novedades.')}
+        ${lista(novedades, x => `<li><span>${esc(x.texto)}<small>${esc(fecha(x.creado_en))}</small></span>${acciones('novedad', x, x.texto)}</li>`, 'Sin novedades.')}
         <form data-form="novedad" class="en-linea" novalidate><input name="texto" required maxlength="200" aria-label="Nueva novedad" placeholder="Por ejemplo: Acuerdos de la sesión 2."><button class="btn" type="submit">Agregar</button></form>
       </section>
 
@@ -469,6 +498,17 @@
         case 'archivos':
           await subir(actual, f.elements.archivos.files);
           break;
+        case 'editar':
+          if (f.dataset.tipo === 'recurso') {
+            const youtube = idDeYoutube(d.url);
+            if (!youtube) throw new Error('No reconozco ese enlace de YouTube.');
+            if (!d.titulo.trim()) throw new Error('Escribe el título del video.');
+            await editar('recurso', f.dataset.id, {youtube_id: youtube, sesion: d.sesion ? Number(d.sesion) : null, titulo: d.titulo.trim(), nota: d.nota.trim() || null});
+          } else {
+            if (!d.texto.trim()) throw new Error('El texto no puede quedar vacío.');
+            await editar(f.dataset.tipo, f.dataset.id, {texto: d.texto.trim()});
+          }
+          break;
       }
       avisar('Guardado.');
       // La confirmación va también en el botón: el aviso sale abajo y es fácil no verlo.
@@ -489,6 +529,25 @@
   $('#editor').addEventListener('click', async e => {
     const b = e.target.closest('[data-accion]');
     if (!b) return;
+    // Editar y Cancelar solo cambian la fila en pantalla: no tocan la base.
+    if (b.dataset.accion === 'editar') {
+      const x = registros.get(b.dataset.id);
+      const li = b.closest('li');
+      if (!x || !li) return;
+      li.dataset.antes = li.innerHTML;
+      li.classList.add('editando');
+      li.innerHTML = formEdicion(b.dataset.tipo, x);
+      li.querySelector('input')?.focus();
+      return;
+    }
+    if (b.dataset.accion === 'cancelar') {
+      const li = b.closest('li.editando');
+      if (!li) return;
+      li.innerHTML = li.dataset.antes;
+      li.classList.remove('editando');
+      delete li.dataset.antes;
+      return;
+    }
     const q = encodeURIComponent(b.dataset.id || '');
     try {
       switch (b.dataset.accion) {

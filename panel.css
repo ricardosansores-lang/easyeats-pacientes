@@ -75,3 +75,8 @@
   .panel-tabs button{flex:1;padding-inline:8px}
   .filas li{flex-wrap:wrap}
 }
+/* Editar pendientes, videos y novedades en la misma fila */
+.acciones-fila [data-accion="editar"]{min-height:36px}
+.filas li.editando{display:block}
+.filas li.editando .edicion{margin:0}
+.edicion .btn-sec{min-height:44px}
