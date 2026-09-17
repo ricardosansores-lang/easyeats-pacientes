@@ -308,11 +308,14 @@
     const hoy = new Date();
     const [pacientes, hechos, pendientes] = await Promise.all([
       db('GET', '/rest/v1/pacientes?select=user_id,nombre,consulta_fecha,consulta_lugar,paquete&order=consulta_fecha.asc.nullslast'),
-      db('GET', '/rest/v1/pendientes_hechos?select=user_id,pendiente_id,completado_en&order=completado_en.desc&limit=8').catch(() => []),
+      db('GET', '/rest/v1/pendientes_hechos?select=user_id,pendiente_id,completado_en&order=completado_en.desc&limit=40').catch(() => []),
       db('GET', '/rest/v1/pendientes?select=id,paciente_id,texto').catch(() => [])
     ]);
     const nombre = id => pacientes.find(p => p.user_id === id)?.nombre || 'Alguien';
-    const textoPendiente = id => pendientes.find(p => p.id === id)?.texto || 'un pendiente';
+    const textoPendiente = id => pendientes.find(p => p.id === id)?.texto;
+    // Solo los que todavía existen: los marcados antes de que los pendientes vivieran en la base
+    // (o de pendientes ya quitados) no tienen texto y solo confunden.
+    const recientes = hechos.filter(h => textoPendiente(h.pendiente_id)).slice(0, 8);
     const cuando = iso => new Intl.DateTimeFormat('es-MX', {weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'}).format(new Date(iso));
 
     const proximas = pacientes.filter(p => p.consulta_fecha && new Date(p.consulta_fecha) >= hoy);
@@ -336,8 +339,8 @@
         ? `<ul class="filas">${sinAgendar.map(p => irA(p.user_id, p.nombre, p.paquete ? esc(PAQUETES[p.paquete]) : 'Sin paquete')).join('')}</ul>`
         : '<p class="vacio">Todas tienen fecha.</p>')}
 
-      ${tarjeta('Pendientes que ya completaron', hechos.length
-        ? `<ul class="filas">${hechos.map(h => `<li><span>${esc(nombre(h.user_id))} · ${esc(textoPendiente(h.pendiente_id))}<small>${esc(cuando(h.completado_en))}</small></span></li>`).join('')}</ul>`
+      ${tarjeta('Pendientes que ya completaron', recientes.length
+        ? `<ul class="filas">${recientes.map(h => `<li><span>${esc(nombre(h.user_id))} · ${esc(textoPendiente(h.pendiente_id))}<small>${esc(cuando(h.completado_en))}</small></span></li>`).join('')}</ul>`
         : '<p class="vacio">Todavía no marcan nada como hecho.</p>')}`;
   }
 
