@@ -210,7 +210,10 @@
       <section class="bloque"><h2>Presentación 3Dx (archivos privados)</h2>
         <p class="ayuda">Sube aquí los archivos de <code>privado/&lt;paciente&gt;</code>. Si ya existe uno con el mismo nombre, se reemplaza.</p>
         ${archivos === null ? '<p class="vacio">No se pudo leer la carpeta de archivos.</p>' : lista(archivosVisibles, a => `<li><span>${esc(a.name)}<small>${a.metadata?.size ? `${Math.max(1, Math.round(a.metadata.size / 1024))} KB · ` : ''}${a.updated_at ? esc(fecha(a.updated_at)) : ''}</small></span>${quitar('quitar-archivo', a.name, a.name)}</li>`, 'Sin archivos: verá «Estamos preparando tu espacio».')}
-        <form data-form="archivos" class="en-linea" novalidate><input name="archivos" type="file" multiple required aria-label="Archivos de la presentación" accept=".html,.js,.json,.jpg,.jpeg,.png,.webp,.svg"><button class="btn" type="submit">Subir archivos</button></form>
+        <form data-form="archivos" novalidate>
+          <label class="soltar"><input name="archivos" type="file" multiple required aria-label="Archivos de la presentación" accept=".html,.js,.json,.jpg,.jpeg,.png,.webp,.svg"><span class="soltar-texto"><b>Arrastra aquí los archivos</b><small>O haz clic para buscarlos. Escritorio → Subir a Mi EasyWay → ${esc(p.nombre.toLowerCase().split(' ')[0])} → Cmd + A.</small></span><span class="soltar-lista"></span></label>
+          <div class="acciones"><button class="btn" type="submit">Subir archivos</button></div>
+        </form>
       </section>`;
     await cargarPacientes();
   }
@@ -466,6 +469,43 @@
       await abrirPaciente(uid);
     } catch (err) { avisar(err.message, true); }
   });
+
+  // Zona de arrastre: los archivos se pueden soltar desde Finder, sin abrir la ventana de elegir archivos.
+  // Fuera de la zona se cancela el arrastre a propósito: si no, soltar un archivo en la página
+  // hace que el navegador lo abra y se pierda lo que estuviera escrito.
+  const zonaDe = e => e.target.closest?.('.soltar');
+  function mostrarElegidos(input) {
+    const destino = input.closest('.soltar')?.querySelector('.soltar-lista');
+    if (!destino) return;
+    const elegidos = [...input.files];
+    destino.textContent = elegidos.length ? `${elegidos.length} ${elegidos.length === 1 ? 'archivo listo' : 'archivos listos'}: ${elegidos.map(a => a.name).join(', ')}` : '';
+  }
+  ['dragover', 'drop'].forEach(t => document.addEventListener(t, e => { if (!zonaDe(e)) e.preventDefault(); }));
+  $('#editor').addEventListener('dragover', e => {
+    const z = zonaDe(e);
+    if (!z) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    z.classList.add('encima');
+  });
+  $('#editor').addEventListener('dragleave', e => {
+    const z = zonaDe(e);
+    if (z && !z.contains(e.relatedTarget)) z.classList.remove('encima');
+  });
+  $('#editor').addEventListener('drop', e => {
+    const z = zonaDe(e);
+    if (!z) return;
+    e.preventDefault();
+    z.classList.remove('encima');
+    // Una carpeta arrastrada llega sin contenido utilizable: mejor decirlo que subir cero archivos.
+    if ([...(e.dataTransfer.items || [])].some(i => i.webkitGetAsEntry?.()?.isDirectory)) return avisar('Arrastra los archivos, no la carpeta: ábrela y selecciona todo con Cmd + A.', true);
+    if (!e.dataTransfer.files.length) return avisar('No llegó ningún archivo. Inténtalo de nuevo.', true);
+    const input = z.querySelector('input[type=file]');
+    input.files = e.dataTransfer.files;
+    mostrarElegidos(input);
+    avisar(`${input.files.length} ${input.files.length === 1 ? 'archivo listo' : 'archivos listos'}. Ahora aprieta «Subir archivos».`);
+  });
+  $('#editor').addEventListener('change', e => { if (e.target.type === 'file') mostrarElegidos(e.target); });
 
   $('#editor').addEventListener('submit', async e => {
     e.preventDefault();
