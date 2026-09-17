@@ -2,7 +2,10 @@
 // La seguridad la aplica Supabase: solo las cuentas de la tabla administradores pueden leer o escribir datos de pacientes.
 (() => {
   const C = window.PORTAL_CONFIG || {};
-  const KEY = 'easyeats-sesion';
+  // Llave propia del panel: antes compartía 'easyeats-sesion' con el portal y se pisaban,
+  // así que entrar a un espacio de paciente cerraba la sesión del panel.
+  const KEY = 'easyeats-panel';
+  const KEY_RECORDAR = 'easyeats-panel-recordar';
   const BUCKET = C.bucket || 'espacios';
   const $ = s => document.querySelector(s);
   let actual = null;
@@ -22,10 +25,14 @@
   let superAdmin = false;
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  // Con la casilla marcada la sesión vive en localStorage (sobrevive al cerrar el navegador).
+  // Sin marcar, en sessionStorage: se borra al cerrar la pestaña, útil en una computadora prestada.
+  const recordar = () => { try { return localStorage.getItem(KEY_RECORDAR) !== 'no'; } catch { return true; } };
+  const almacen = () => (recordar() ? localStorage : sessionStorage);
   const store = {
-    get() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
-    set(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} },
-    clear() { try { localStorage.removeItem(KEY); } catch {} }
+    get() { try { return JSON.parse(almacen().getItem(KEY)) || JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
+    set(s) { try { almacen().setItem(KEY, JSON.stringify(s)); } catch {} },
+    clear() { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch {} }
   };
   const fecha = iso => new Intl.DateTimeFormat('es-MX', {day: 'numeric', month: 'short', year: 'numeric'}).format(new Date(iso));
   // Mérida no tiene horario de verano: UTC−6 todo el año.
@@ -77,7 +84,8 @@
     a.classList.toggle('error', error);
     a.classList.add('visible');
     clearTimeout(avisoTimer);
-    avisoTimer = setTimeout(() => a.classList.remove('visible'), error ? 6000 : 2500);
+    // 6 segundos también en los avisos buenos: 2.5 era tan corto que parecía que no se había guardado.
+    avisoTimer = setTimeout(() => a.classList.remove('visible'), 6000);
   }
 
   function mostrarLogin(mensaje = '') {
@@ -102,9 +110,10 @@
     try { superAdmin = await db('POST', '/rest/v1/rpc/es_super_admin', {}) === true; } catch {}
     $('#tabs').hidden = !superAdmin;
     $('#panel-login').hidden = true;
-    $('#panel-app').hidden = false;
     $('#salir').hidden = false;
     await cargarPacientes();
+    // Se entra por Inicio: primero qué hay que atender, no la lista pelona.
+    verVista('inicio');
   }
 
   async function cargarPacientes() {
@@ -286,12 +295,58 @@
   }
 
   function verVista(vista) {
-    const codigo = vista === 'codigo';
-    $('#panel-app').hidden = codigo;
-    $('#panel-codigo').hidden = !codigo;
+    $('#panel-inicio').hidden = vista !== 'inicio';
+    $('#panel-app').hidden = vista !== 'pacientes';
+    $('#panel-codigo').hidden = vista !== 'codigo';
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.vista === vista));
-    if (codigo) cargarCodigo().catch(err => avisar(err.message, true));
+    if (vista === 'codigo') cargarCodigo().catch(err => avisar(err.message, true));
+    if (vista === 'inicio') cargarInicio().catch(err => avisar(err.message, true));
   }
+
+  // Pantalla de entrada: qué hay que atender hoy, sin inventar números ni prometer avisos.
+  async function cargarInicio() {
+    const hoy = new Date();
+    const [pacientes, hechos, pendientes] = await Promise.all([
+      db('GET', '/rest/v1/pacientes?select=user_id,nombre,consulta_fecha,consulta_lugar,paquete&order=consulta_fecha.asc.nullslast'),
+      db('GET', '/rest/v1/pendientes_hechos?select=user_id,pendiente_id,completado_en&order=completado_en.desc&limit=8').catch(() => []),
+      db('GET', '/rest/v1/pendientes?select=id,paciente_id,texto').catch(() => [])
+    ]);
+    const nombre = id => pacientes.find(p => p.user_id === id)?.nombre || 'Alguien';
+    const textoPendiente = id => pendientes.find(p => p.id === id)?.texto || 'un pendiente';
+    const cuando = iso => new Intl.DateTimeFormat('es-MX', {weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'}).format(new Date(iso));
+
+    const proximas = pacientes.filter(p => p.consulta_fecha && new Date(p.consulta_fecha) >= hoy);
+    const pasadas = pacientes.filter(p => p.consulta_fecha && new Date(p.consulta_fecha) < hoy);
+    const sinAgendar = pacientes.filter(p => !p.consulta_fecha);
+
+    const tarjeta = (titulo, cuerpo) => `<section class="bloque"><h2>${titulo}</h2>${cuerpo}</section>`;
+    const irA = (id, texto, detalle) => `<li><span>${esc(texto)}<small>${detalle}</small></span><button type="button" class="btn-sec" data-ir="${esc(id)}">Abrir</button></li>`;
+
+    $('#panel-inicio').innerHTML = `
+      <div class="editor-head"><span class="eyebrow">PANEL</span><h1>Hola, Ricardo${'.'}</h1>
+        <p class="ayuda">${pacientes.length} ${pacientes.length === 1 ? 'paciente' : 'pacientes'} en tu espacio.</p></div>
+
+      ${tarjeta('Próximas consultas', proximas.length
+        ? `<ul class="filas">${proximas.map(p => irA(p.user_id, p.nombre, `${esc(cuando(p.consulta_fecha))}${p.consulta_lugar ? ` · ${esc(p.consulta_lugar)}` : ''}`)).join('')}</ul>`
+        : '<p class="vacio">Ninguna consulta agendada.</p>')}
+
+      ${pasadas.length ? tarjeta('Consultas que ya pasaron', `<p class="ayuda">Siguen marcadas como próximas en el espacio del paciente. Conviene actualizarlas.</p><ul class="filas">${pasadas.map(p => irA(p.user_id, p.nombre, esc(cuando(p.consulta_fecha)))).join('')}</ul>`) : ''}
+
+      ${tarjeta('Sin consulta agendada', sinAgendar.length
+        ? `<ul class="filas">${sinAgendar.map(p => irA(p.user_id, p.nombre, p.paquete ? esc(PAQUETES[p.paquete]) : 'Sin paquete')).join('')}</ul>`
+        : '<p class="vacio">Todas tienen fecha.</p>')}
+
+      ${tarjeta('Pendientes que ya completaron', hechos.length
+        ? `<ul class="filas">${hechos.map(h => `<li><span>${esc(nombre(h.user_id))} · ${esc(textoPendiente(h.pendiente_id))}<small>${esc(cuando(h.completado_en))}</small></span></li>`).join('')}</ul>`
+        : '<p class="vacio">Todavía no marcan nada como hecho.</p>')}`;
+  }
+
+  $('#panel-inicio').addEventListener('click', e => {
+    const b = e.target.closest('[data-ir]');
+    if (!b) return;
+    verVista('pacientes');
+    abrirPaciente(b.dataset.ir).catch(err => avisar(err.message, true));
+  });
 
   $('#tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-vista]');
@@ -341,6 +396,8 @@
     try {
       const r = await api('/auth/v1/token?grant_type=password', {method: 'POST', body: JSON.stringify({email: $('#email').value.trim(), password: $('#password').value})});
       if (!r.ok) throw new Error(r.status === 429 ? 'Demasiados intentos. Espera unos minutos.' : 'Correo o contraseña incorrectos.');
+      // La preferencia se guarda antes que la sesión: decide en qué almacén queda.
+      try { localStorage.setItem(KEY_RECORDAR, $('#recordar')?.checked === false ? 'no' : 'si'); } catch {}
       store.set(toSession(await r.json()));
       $('#password').value = '';
       await iniciar();
@@ -411,7 +468,15 @@
           break;
       }
       avisar('Guardado.');
+      // La confirmación va también en el botón: el aviso sale abajo y es fácil no verlo.
+      const etiqueta = boton.textContent;
       await abrirPaciente(actual);
+      const nuevo = $(`#editor form[data-form="${f.dataset.form}"] [type=submit]`);
+      if (nuevo) {
+        nuevo.textContent = 'Guardado ✓';
+        nuevo.classList.add('ok');
+        setTimeout(() => { nuevo.textContent = etiqueta; nuevo.classList.remove('ok'); }, 2500);
+      }
     } catch (err) {
       avisar(err.message, true);
       boton.disabled = false;

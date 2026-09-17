@@ -1,7 +1,12 @@
 /* Panel de Ricardo · Mi EasyWay */
 .panel{min-height:100dvh}
 .panel-top{height:72px;padding:14px clamp(20px,4vw,48px);gap:20px}
-.panel-top .brand img{width:128px}
+/* Mismo recorte que el portal: deja fuera la franja de "NUTRIÓLOGOS" y agranda el logo. */
+.panel-top .brand img{width:150px;clip-path:polygon(0 0,100% 0,100% 70%,31% 70%,31% 100%,0 100%)}
+/* ".panel .casilla" pesa más que ".panel label" y ".panel input", que estiran todo a lo ancho. */
+.panel .casilla{flex-direction:row;align-items:center;justify-content:flex-start;gap:9px;font-size:14px;font-weight:400;letter-spacing:0;cursor:pointer}
+.panel .casilla input{flex:none;width:18px;height:18px;min-height:0;padding:0;accent-color:var(--green);margin:0}
+.btn.ok{background:var(--green)}
 .panel-salir{margin-left:auto;min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:20px;background:none;font-size:13px}
 .panel-main{max-width:1320px;margin:0 auto;padding:28px clamp(16px,4vw,48px) 80px}
 .panel label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;letter-spacing:.3px}

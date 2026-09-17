@@ -4,13 +4,15 @@
 <body class="panel">
 <header class="topbar panel-top"><span class="brand"><img src="logo.svg" alt="EasyEats Nutriólogos"></span><span class="method">PANEL <i></i> MI EASYWAY</span><button id="salir" class="panel-salir" type="button" hidden>Cerrar sesión</button></header>
 <main class="panel-main">
-<nav id="tabs" class="panel-tabs" hidden><button type="button" data-vista="pacientes" class="on">Pacientes</button><button type="button" data-vista="codigo">Código y mejoras</button></nav>
+<nav id="tabs" class="panel-tabs" hidden><button type="button" data-vista="inicio" class="on">Inicio</button><button type="button" data-vista="pacientes">Pacientes</button><button type="button" data-vista="codigo">Código y mejoras</button></nav>
+<section id="panel-inicio" class="panel-editor" hidden></section>
 <section id="panel-login" class="panel-login" hidden>
 <form id="form-login" novalidate>
 <span class="eyebrow">ACCESO DE ADMINISTRADOR</span>
 <h1>Panel<span class="name-dot">.</span></h1>
 <label>Correo<input id="email" type="email" autocomplete="username" required></label>
 <label>Contraseña<input id="password" type="password" autocomplete="current-password" required></label>
+<label class="casilla"><input id="recordar" type="checkbox" checked>Mantener mi sesión iniciada</label>
 <button class="btn" type="submit">Entrar</button>
 <p id="login-msg" class="panel-msg" role="status"></p>
 </form>
