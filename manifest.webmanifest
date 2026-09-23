@@ -1,16 +1,16 @@
 {
-  "name": "Mi EasyWay · EasyEats",
-  "short_name": "Mi EasyWay",
-  "description": "Tu espacio privado de The EasyWay.",
+  "name": "Espacios EasyEats",
+  "short_name": "Espacios EasyEats",
+  "description": "Agenda y consultorio para nutriólogos de EasyEats.",
   "lang": "es-MX",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#FBFAF5",
-  "theme_color": "#FBFAF5",
+  "background_color": "#04302A",
+  "theme_color": "#04302A",
   "icons": [
-    {"src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {"src": "/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ]
 }
